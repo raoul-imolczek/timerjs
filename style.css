@@ -1,0 +1,36 @@
+body {
+    background-image: url('circuit.jpg');
+    background-size: 100%;
+}
+
+#timer, #digicode {
+    font-family: monospace;
+    font-size: 200%;
+    font-weight: bold;
+}
+
+.largeCard {
+    width: 600px;
+}
+
+.smallCard {
+    width: 300px;
+}
+
+.alphacode, .digicode {
+    text-align: center;
+}
+
+.alphacode .btn-digicode {
+    width: 42px;
+    margin: 4px;
+}
+
+.digicode .btn-digicode {
+    width: 42px;
+    margin: 4px;
+}
+
+.input-digicode {
+    text-align: center;
+}

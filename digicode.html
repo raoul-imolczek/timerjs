@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Digital code</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+
+    <div id="app">
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Timer</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown active">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Keyboard type
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a v-on:click="setDigit" class="dropdown-item" href="#">Digits</a>
+                            <a v-on:click="setAlpha" class="dropdown-item" href="#">Alpha</a>
+                            <a v-on:click="setAlphaDigit" class="dropdown-item" href="#">Alpha + Digits</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown active">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Timer configuration
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <div class="form-group dropdown-item">
+                                <label for="totalTime">Total time</label>
+                                <div class="input-group">
+                                    <input v-model="totalTime" type="number" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">min</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group dropdown-item">
+                                <label for="totalTime">Malus</label>
+                                <div class="input-group">
+                                    <input v-model="malusSeconds" type="number" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">sec</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group dropdown-item">
+                                <button v-on:click="reset" class="btn btn-primary my-2 my-sm-0" type="reset">Reset</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown active">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Code configuration
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <div class="form-group dropdown-item">
+                                <label for="correctCode">Correct code</label>
+                                <div class="input-group">
+                                    <input v-model="correctCode" type="password" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group dropdown-item">
+                                <button v-on:click="reset" class="btn btn-primary my-2 my-sm-0" type="reset">Reset</button>
+                            </div>
+                        </div>
+                    </li>                    
+                </ul>
+                <form class="form-inline my-2 my-lg-0">
+                    <button v-on:click="reset" class="btn btn-primary my-2 my-sm-0" type="reset">Reset</button>
+                </form>                
+            </div>
+        </nav>
+    
+        <br />
+    
+        <div class="container-fluid">
+    
+            <div class="row no-gutters">
+    
+                <div class="col-sm">
+    
+                    <div style="margin:auto;" class="card" v-bind:class="[ {largeCard: isAlpha}, {smallCard: !isAlpha} ]">
+                        <div class="card-body">
+                            <h5 class="card-title">Digital code</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Find the correct code!</h6>
+                
+                            <form>
+            
+                                <div class="form-group">
+                                    <label for="timer">Time remaining</label>
+                                    <div class="input-group" >
+                                        <input v-if="danger" v-model="timerDisplay" disabled="disabled" type="text" class="form-control form-control-lg input-digicode text-danger" id="timer" aria-describedby="timerHelp" placeholder="00:00">
+                                        <input v-if="!danger" v-model="timerDisplay" disabled="disabled" type="text" class="form-control form-control-lg input-digicode" id="timer" aria-describedby="timerHelp" placeholder="00:00">
+                                        <div class="input-group-append">
+                                            <button v-if="!pause && !danger" v-on:click="pauseTimer" type="button" class="btn btn-primary"><i class="fas fa-pause"></i></button>
+                                            <button v-if="!pause && danger" v-on:click="pauseTimer" type="button" class="btn btn-danger"><i class="fas fa-pause"></i></button>
+                                            <button v-if="pause && !danger" v-on:click="startTimer" type="button" class="btn btn-primary"><i class="fas fa-play"></i></button>
+                                            <button v-if="pause && danger" v-on:click="startTimer" type="button" class="btn btn-danger"><i class="fas fa-play"></i></button>
+                                        </div>
+                                    </div>
+                                    <small id="timerHelp" class="form-text text-muted">When the timer reaches 00:00:00, the game is lost!</small>
+                                    <div v-if="started && !danger" class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" v-bind:style="{ width: percent + '%' }"></div>
+                                    </div>                        
+                                    <div v-if="started && danger" class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" v-bind:style="{ width: percent + '%' }"></div>
+                                    </div>                        
+                                </div>
+                    
+                                <div class="form-group">
+                                    <label for="digicode">Code</label>
+                                    <input v-model="digicode" disabled="disabled" type="text" class="form-control form-control-lg input-digicode" id="digicode" aria-describedby="digicodeHelp" placeholder="Enter code">
+                                    <small id="digicodeHelp" class="form-text text-muted">{{malusSeconds}} seconds penalty for each wrong code</small>
+                                </div>
+                
+                                <div v-if="isDigit && !isAlpha" class="container digicode">
+                                    <div class="row no-gutters">
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">7</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">8</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">9</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">4</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">5</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">6</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">1</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">2</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">3</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm">
+                                            <button v-on:click="correctDigit" type="button" class="btn btn-outline-dark btn-digicode"><i class="fas fa-backward"></i></button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">0</button>
+                                        </div>
+                                        <div class="col-sm">
+                                            <button v-on:click="submitCode" type="button" class="btn btn-primary btn-digicode"><i class="fas fa-check"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+            
+                                <div v-if="isAlpha" class="container alphacode">
+                                    <div v-if="isDigit" class="row no-gutters">
+                                        <div class="col-sm-1 offset-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">1</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">2</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">3</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">4</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">5</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">6</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">7</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">8</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">9</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">0</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm-1 offset-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">Q</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">W</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">E</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">R</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">T</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">Y</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">U</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">I</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">O</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">P</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm-1 offset-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">A</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">S</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">D</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">F</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">G</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">H</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">J</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">K</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">L</button>
+                                        </div>
+                                    </div>
+                                    <div class="row no-gutters">
+                                        <div class="col-sm-1 offset-sm-1">
+                                            <button v-on:click="correctDigit" type="button" class="btn btn-outline-dark btn-digicode"><i class="fas fa-backward"></i></button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">Z</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">X</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">C</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">V</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">B</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">N</button>
+                                        </div>
+                                        <div class="col-sm-1">
+                                            <button v-on:click="sendDigit" type="button" class="btn btn-secondary btn-digicode">M</button>
+                                        </div>
+                                        <div class="col-sm-1 offset-sm-1">
+                                            <button v-on:click="submitCode" type="button" class="btn btn-primary btn-digicode"><i class="fas fa-check"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </form>
+                        </div>
+                    
+                    </div>
+                </div>
+    
+            </div>
+    
+        </div>
+
+        <!-- Modal Success -->
+        <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="successModalLabel">Congratulations</h5>
+                        <button v-on:click="reset" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        You have found the correct combination and won the game with <strong>{{timerDisplay}}</strong> remaining !
+                    </div>
+                    <div class="modal-footer">
+                        <button v-on:click="reset" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>        
+
+        <!-- Modal Failure -->
+        <div class="modal fade" id="failureModal" tabindex="-1" role="dialog" aria-labelledby="failureModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="failureModalLabel">Congratulations</h5>
+                        <button v-on:click="reset" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Sorry, you've run out of time and lost the game!
+                    </div>
+                    <div class="modal-footer">
+                        <button v-on:click="reset" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>  
+
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+</html>
