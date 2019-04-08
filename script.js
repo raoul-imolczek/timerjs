@@ -27,7 +27,7 @@ var app = new Vue({
             this.updateConf();
             this.interval = setInterval(() => {
                 this.timerCount(this.start,this.end);
-            }, 10);
+            }, 100);
         })
     },
 
@@ -41,7 +41,7 @@ var app = new Vue({
         },
         timerCount: function(start, end) {
             if (!this.pause) {
-                this.timer = this.timer - 1 - this.malusAmount;
+                this.timer = this.timer - 10 * (1 + this.malusAmount);
                 if(this.timer < 0) {
                     this.timer = 0;
                     $('#failureModal').modal({
@@ -105,8 +105,8 @@ var app = new Vue({
                 })
 
             } else {
-                this.malusAmount = 20;
-                this.malusTimes = this.malusSeconds * 5;
+                this.malusAmount = 10;
+                this.malusTimes = this.malusSeconds;
                 this.digicode = '';
                 this.digicodeDisplay = '';
             }
